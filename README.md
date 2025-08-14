@@ -2,24 +2,15 @@
   <img src="https://user-images.githubusercontent.com/5097752/41201696-1c1fe926-6cef-11e8-8972-b22e89dba68c.jpg" width="300px" alt="">
 </p>
 
-# Sketch to Art :art:
-
-> You could be an artist with AI
-
-[**[Live Demo]**](https://dip.imfing.com) *Note: Only frontend is available now*
-
-Or you can [**Run with Docker**](#run-with-docker) in minutes 
-
+# Doodle-Art :art:
 
 * [Introduction](#introduction)
-* [Run with Docker](#run-with-docker)
 * [Theories](#theories)
   + [Sketch Reconstruction](#sketch-reconstruction)
   + [Style Transfer](#style-transfer)
 * [Manual Installation](#manual-installation)
   + [Backend](#backend)
   + [Frontend](#frontend)
-* [Acknowledgments](#acknowledgments)
 * [Authors](#authors)
 * [License](#license)
 
@@ -33,24 +24,6 @@ This project can transform your casual sketch to beautiful painting/artwork usin
 <p align="center">
   <img src="https://user-images.githubusercontent.com/5097752/41201770-a6b9f35a-6cf0-11e8-8711-916f769c1c9d.jpg" alt="">
 </p>
-
-## Run with Docker
-
-With **[Docker](https://www.docker.com)**, you can quickly build and run the entire application in minutes :whale:
-
-```bash
-# 1. First, clone the repo
-git clone https://github.com/mtobeiyf/sketch-to-art.git
-cd sketch-to-art
-
-# 2. Build Docker image
-docker build -t sketch-to-art:dev .
-
-# 3. Run!
-docker run -it --rm -p 8080:8080 -p 5001:5001 -p 5002:5002 sketch-to-art:dev
-```
-
-Then, go to **localhost:8080** and play with the demo! :tada:
 
 ## Theories
 
@@ -95,7 +68,7 @@ pip install -r server/requirements.txt
 
 ```bash
 # Simply run with python
-python app_xxx.py
+sh run.sh
 ```
 
 And you could see the output indicating the port it's listening (5001 and 5002). Go to `http://localhost:5001` and you should see the returned information.
@@ -109,8 +82,8 @@ You should installed:
 
 ```
 # Clone the repo
-git clone git@github.com:mtobeiyf/sketch-to-art.git
-cd sketch-to-art
+git clone git@github.com:sandipkatel/Doodle-Art.git
+cd Doodle-Art
 
 # Install dependencies
 yarn  # or npm install
@@ -121,22 +94,11 @@ yarn dev  # or npm run dev
 
 Open your favorite browser at `http://localhost:8080`, the site is there.
 
-
-## Acknowledgments
-
-This is the final project of *Digital Image Processing* instructed by Prof. Jia Yan.
-
-* [WCT-TF](https://github.com/eridgd/WCT-TF)
-* [pix2pix-tensorflow](https://github.com/affinelayer/pix2pix-tensorflow)
-* [pytorch-CycleGAN-and-pix2pix](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix)
-* [Neural-Style-Transfer-Papers](https://github.com/ycjing/Neural-Style-Transfer-Papers)
-* [Vue.js](https://vuejs.org/)
-
 ## Authors
 
-Xin Fu, Shuaibin Zhang, Tangbo Liu, Haoran Su
+Sandip Katel, Yujal Shrestha, Sharad Pokharel
 
 ## License
-Copyright © 2018, Fing
+Copyright © 2018, Doodle-Art
 
 Released under the [MIT License](https://opensource.org/licenses/MIT).
