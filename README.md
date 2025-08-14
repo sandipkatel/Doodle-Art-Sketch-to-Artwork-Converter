@@ -67,7 +67,7 @@ pip install -r server/requirements.txt
 #### Run
 
 ```bash
-# Simply run with python
+# Simply run in bash
 sh run.sh
 ```
 
