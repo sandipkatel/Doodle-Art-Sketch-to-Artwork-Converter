@@ -139,7 +139,7 @@ canvas {
   background: white;
   box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.2);
   cursor: crosshair;
-  max-width: 400px;
+  max-width: 800px;
   width: 100%;
 }
 </style>

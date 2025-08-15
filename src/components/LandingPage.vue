@@ -1,726 +1,460 @@
 <template>
   <div id="wrapper">
-    <h1>
-      Sketch to Art
-    </h1>
+    <h1>Sketch to Art</h1>
+    
     <div class="container">
+      <!-- Drawing Section -->
       <div class="section">
-        <h3>Start drawing</h3>
+        <h3>Start Drawing</h3>
+        
         <div class="canvas-wrapper">
-          <drawing-board ref="canvas"
-                         :enabled="!userContent"></drawing-board>
+          <drawing-board ref="canvas" :enabled="!userContent"></drawing-board>
         </div>
-        <form id="upload-file"
-              method="post"
-              enctype="multipart/form-data">
-          <label for="imageUpload"
-                 class="upload-label">
-            Choose...
+        
+        <!-- First Row: Clear and Upload -->
+        <div class="button-row">
+          <button class="btn btn-clear" @click="clearCanvas">
+            Clear Canvas
+          </button>
+          <label for="imageUpload" class="btn btn-upload">
+            Choose Image
           </label>
-          <input type="file"
-                 name="file"
-                 @change="contentUpload"
-                 id="imageUpload"
-                 accept=".png, .jpg, .jpeg">
-        </form>
-        <button class="btn"
-                @click="clearCanvas">
-          <span class="clear"></span>
-          <span>Clear</span>
-        </button>
+          <input 
+            type="file" 
+            id="imageUpload" 
+            @change="contentUpload"
+            accept=".png,.jpg,.jpeg"
+          >
+        </div>
+        
+        <!-- Second Row: Generate -->
+        <div class="button-row">
+          <button class="btn btn-submit" @click="submitDrawing">
+            Generate Art
+          </button>
+        </div>
       </div>
 
-      <div class="section">
-        <h3>Style</h3>
-        <div class="image-container">
-          <div class="image-flex">
-            <div v-for="image in styleImages"
-                 :key="image.id"
-                 class="image-item">
-              <image-item :src="image.src"
-                          :id="image.id"
-                          :selected="selectedId"
-                          @clicked="onSelectStyle"></image-item>
-            </div>
-          </div>
-        </div>
-        <div class="style-hint">
-          Choose a style or
-          <form id="upload-style"
-                method="post"
-                enctype="multipart/form-data">
-            <label for="styleUpload"
-                   class="upload-label">
-              upload yours
-            </label>
-            <input type="file"
-                   name="file"
-                   @change="styleUpload"
-                   id="styleUpload"
-                   accept=".png, .jpg, .jpeg">
-          </form>
-        </div>
-
-        <div v-if="userStyle"
-             class="upload-style">
-          <div class="remove"
-               @click="removeUserStyle">Remove</div>
-          <img :src="userStyleSrc"
-               alt="">
-        </div>
-
-        <div class="options">
-          <toggle-button :value="highReality"
-                         :color="{checked: '#cb8589', unchecked: '#0984e3'}"
-                         :sync="true"
-                         :labels="{checked: 'More Real', unchecked: 'More Style'}"
-                         :width="80"
-                         :height="20"
-                         @change="toggleReality" />
-          <toggle-button :value="!highQuality"
-                         :color="{checked: '#00a388', unchecked: '#9b59b6'}"
-                         :sync="true"
-                         :labels="{checked: 'High Speed', unchecked: 'High Quality'}"
-                         :width="85"
-                         :height="20"
-                         @change="toggleQuality" />
-        </div>
-
-        <button class="btn"
-                :disabled="submitDisable"
-                @click="submitDrawing">
-          <span class="submit"></span>
-          <span>Submit</span>
-        </button>
-      </div>
-
+      <!-- Result Section -->
       <div class="section">
         <h3>Result</h3>
+        
         <div class="result-container">
-          <div class="hint"
-               v-if="!resultSrc">
+          <div class="hint" v-if="!resultSrc">
             Your result will be shown here.
           </div>
-          <img v-if="resultSrc"
-               :src="resultSrc"
-               alt="">
+          <img v-if="resultSrc" :src="resultSrc" alt="Generated art">
         </div>
-
-        <button v-if="showToggle"
-                class="btn"
-                @click="toggleResult">
-          <span class="toggle"></span>
-          <span>Toggle result</span>
-        </button>
-        <button v-if="resultSrc"
-                class="btn"
-                @click="uploadToGallery">
-          <span>Upload to Gallery</span>
-        </button>
-        <div v-if="resultSrc"
-             class="hint">Right click or press long to save</div>
+        
+        <div v-if="resultSrc" class="result-actions">
+          <button class="btn btn-upload" @click="uploadToGallery">
+            Save to Gallery (Beta)
+          </button>
+          <div class="hint">Right click to save image</div>
+        </div>
       </div>
     </div>
 
-    <div class="overlay"
-         v-if="showWaitModal">
-      <div class="half-circle-spinner">
-        <div class="circle circle-1"></div>
-        <div class="circle circle-2"></div>
+    <!-- Loading Modal -->
+    <div class="overlay" v-if="showWaitModal">
+      <div class="spinner">
+        <div class="spinner-circle"></div>
       </div>
-      <div class="content">
-        {{ modalContent }}
-      </div>
+      <div class="loading-text">{{ modalContent }}</div>
     </div>
   </div>
 </template>
 
 <script>
 import DrawingBoard from "./DrawingBoard.vue";
-import ImageItem from "./ImageItem.vue";
 import axios from "axios";
-import Vue from "vue";
-import VueSwal from "vue-swal";
-import ToggleButton from "vue-js-toggle-button";
 
-Vue.use(VueSwal);
-Vue.use(ToggleButton);
-
-const axiosPix =
-  process.env.NODE_ENV === "development"
-    ? axios.create({ baseURL: "http://localhost:5001" })
-    : axios.create({ baseURL: "https://dip.imfing.com/pix" });
-
-const axiosStyle =
-  process.env.NODE_ENV === "development"
-    ? axios.create({ baseURL: "http://localhost:5002" })
-    : axios.create({ baseURL: "https://dip.imfing.com/style" });
+// Simplified axios setup
+const apiClient = axios.create({
+  baseURL: process.env.NODE_ENV === "development" 
+    ? "http://localhost:5001" 
+    : "https://dip.imfing.com/pix"
+});
 
 export default {
-  name: "LandingPage",
-
+  name: "SketchToArt",
+  
   components: {
-    DrawingBoard,
-    ImageItem
+    DrawingBoard
   },
 
   data() {
     return {
-      msg: "Welcome",
-      styleImages: [
-        { id: "1", src: require("@/assets/thumbs/1.jpg") },
-        { id: "2", src: require("@/assets/thumbs/2.jpg") },
-        { id: "3", src: require("@/assets/thumbs/3.jpg") },
-        { id: "4", src: require("@/assets/thumbs/4.jpg") },
-        { id: "5", src: require("@/assets/thumbs/5.jpg") },
-        { id: "6", src: require("@/assets/thumbs/6.jpg") },
-        { id: "7", src: require("@/assets/thumbs/7.jpg") },
-        { id: "8", src: require("@/assets/thumbs/8.jpg") },
-        { id: "9", src: require("@/assets/thumbs/9.jpg") }
-      ],
-      selectedId: 1,
       sessionId: "",
-
       userContent: false,
-      userStyle: false,
-      userStyleSrc: "",
-
-      highReality: true,
-      highQuality: false,
-
-      showStyle: true,
-      showToggle: false,
       resultSrc: "",
-      resultPix: "",
-      resultStyle: "",
-
       showWaitModal: false,
-      modalContent: "Waiting for a few seconds...",
-      submitDisable: true
+      modalContent: "Processing your art..."
     };
   },
 
-  mounted: function() {
-    // this.canvasWidth = document.body.clientWidth / 2;
-    // this.canvasHeight = this.canvasWidth*(3/5);
-    this.selectedId = 1;
-    this.sessionId =
-      "_" +
-      Math.random()
-        .toString(36)
-        .substr(2, 9);
-
-    let that = this;
-    axiosPix
-      .get("/")
-      .catch(function(error) {
-        that.$swal({
-          title: "Something wrong...",
-          text:
-            "Server not responding, check your Internet connection first. You can view details in the About page. To experience the app, please contact the author for help.",
-          icon: "warning",
-          buttons: {
-            cancel: "Got it"
-          }
-        });
-        console.log("pix server error");
-      })
-      .then(response => {
-        console.log(response.data);
-        return axiosStyle.get("/");
-      })
-      .catch(function(error) {
-        console.log("style server error");
-      })
-      .then(response => {
-        console.log(response.data);
-      });
+  mounted() {
+    // Generate session ID
+    this.sessionId = "_" + Math.random().toString(36).substr(2, 9);
+    
+    // Test server connection
+    this.testConnection();
   },
 
   methods: {
-    clearCanvas() {
-      this.$refs.canvas.clearCanvas();
-      this.userContent = false;
-    },
-
-    onSelectStyle(id) {
-      this.selectedId = id;
-      this.submitDisable = false;
-    },
-
-    submitDrawing() {
-      // Retreive canvas drawing
-      var canvas = document.querySelector("#canvas");
-      var context = canvas.getContext("2d");
-
-      var w = canvas.width;
-      var h = canvas.height;
-      var compositeOperation = context.globalCompositeOperation;
-      context.globalCompositeOperation = "destination-over";
-      context.fillStyle = "white";
-      context.fillRect(0, 0, w, h);
-
-      var src = canvas.toDataURL("image/png");
-      var container = this.$el.querySelector(".result-container");
-      container.scrollIntoView({ behavior: "smooth" });
-
-      // Build form data
-      var pixData = new FormData();
-      var styleData = new FormData();
-      pixData.append("id", this.sessionId);
-      pixData.append("image", src);
-
-      styleData.append("id", this.sessionId);
-      styleData.append("style", this.selectedId);
-      styleData.append("highReality", this.highReality);
-      styleData.append("highQuality", this.highQuality);
-      styleData.append("userContent", this.userContent);
-      styleData.append("userStyle", this.userStyle);
-      styleData.append("contentData", src);
-      styleData.append("styleData", this.userStyleSrc);
-
-      // Use custom image
-      if (this.userContent) {
-        this.modalContent = "Stylizing your picture...";
-        this.showWaitModal = true;
-
-        axiosStyle({
-          url: "/stylize-with-data",
-          method: "POST",
-          data: styleData,
-          headers: {
-            "Content-Type": "multipart/form-data"
-          }
-        }).then(response => {
-          this.showWaitModal = false;
-          this.resultStyle = response.data;
-          this.resultSrc = this.resultStyle;
-          this.showToggle = false;
-        });
-      } else {
-        // Use sketch
-        this.modalContent = "Waiting for a few seconds...";
-        this.showWaitModal = true;
-
-        axiosPix({
-          url: "/pix-translate-data",
-          method: "POST",
-          data: pixData,
-          headers: {
-            "Content-Type": "multipart/form-data"
-          }
-        })
-          .then(response => {
-            console.log(response.data)
-            this.resultPix = response.data;
-            this.resultSrc = this.resultPix;
-            this.modalContent = "Styling the picture...";
-            return axiosStyle({
-              url: "/stylize-with-data",
-              method: "POST",
-              data: styleData,
-              headers: {
-                "Content-Type": "multipart/form-data"
-              }
-            });
-          })
-          .then(response => {
-            this.showWaitModal = false;
-            this.resultStyle = response.data;
-            this.resultSrc = this.resultStyle;
-            this.showToggle = true;
-          });
-      }
-    },
-
-    toggleReality() {
-      this.highReality = !this.highReality;
-    },
-
-    toggleQuality() {
-      this.highQuality = !this.highQuality;
-    },
-
-    toggleResult() {
-      this.showStyle = !this.showStyle;
-      if (this.showStyle) {
-        this.resultSrc = this.resultStyle;
-      } else {
-        this.resultSrc = this.resultPix;
-      }
-    },
-
-    uploadToGallery() {
-      this.$swal({
-        text: "Save your work to public gallery?",
-        buttons: true
-      }).then(willUpload => {
-        if (willUpload) {
-          var uploadData = new FormData();
-          uploadData.append("id", this.sessionId);
-          // Display overlay
-          this.modalContent = "Saving...";
-          this.showWaitModal = true;
-
-          axiosStyle({
-            url: "/submit-to-gallery",
-            method: "POST",
-            data: uploadData,
-            headers: {
-              "Content-Type": "multipart/form-data"
-            }
-          })
-            .then(response => {
-              console.log(response.data);
-              this.showWaitModal = false;
-              this.$swal("Go to the gallery and check it out!", {
-                icon: "success"
-              });
-            })
-            .catch(function(response) {
-              this.modalContent = "Ooops, something wrong...";
-              setTimeout(function() {
-                this.showWaitModal = false;
-              }, 3000);
-            });
-        }
+    testConnection() {
+      apiClient.get("/").catch(error => {
+        console.warn("Server connection failed:", error.message);
+        // Could show user notification here
       });
     },
 
-    contentUpload(e) {
-      var files = e.target.files || e.dataTransfer.files;
+    clearCanvas() {
+      this.$refs.canvas.clearCanvas();
+      this.userContent = false;
+      this.resultSrc = "";
+    },
+
+    async submitDrawing() {
+      try {
+        // Get canvas data
+        const canvas = document.querySelector("#canvas");
+        const context = canvas.getContext("2d");
+        
+        // Set white background
+        const w = canvas.width;
+        const h = canvas.height;
+        const originalOperation = context.globalCompositeOperation;
+        context.globalCompositeOperation = "destination-over";
+        context.fillStyle = "white";
+        context.fillRect(0, 0, w, h);
+        context.globalCompositeOperation = originalOperation;
+
+        const imageData = canvas.toDataURL("image/png");
+        
+        // Show loading
+        this.showWaitModal = true;
+        this.modalContent = "Creating your art...";
+
+        // Prepare form data
+        const formData = new FormData();
+        formData.append("id", this.sessionId);
+        formData.append("image", imageData);
+
+        // Submit to server
+        const response = await apiClient.post("/pix-translate-data", formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+
+        this.resultSrc = response.data;
+        
+      } catch (error) {
+        console.error("Submission failed:", error);
+        this.modalContent = "Something went wrong. Please try again.";
+        setTimeout(() => this.showWaitModal = false, 2000);
+      } finally {
+        if (this.resultSrc) {
+          this.showWaitModal = false;
+        }
+      }
+    },
+
+    async uploadToGallery() {
+      if (!confirm("Save your work to public gallery?")) return;
+
+      try {
+        this.showWaitModal = true;
+        this.modalContent = "Saving to gallery...";
+
+        const formData = new FormData();
+        formData.append("id", this.sessionId);
+
+        await apiClient.post("/submit-to-gallery", formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+
+        alert("Successfully saved to gallery!");
+        
+      } catch (error) {
+        console.error("Gallery upload failed:", error);
+        alert("Failed to save to gallery. Please try again.");
+      } finally {
+        this.showWaitModal = false;
+      }
+    },
+
+    contentUpload(event) {
+      const files = event.target.files;
       if (!files.length) return;
 
-      var reader = new FileReader();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const canvas = document.querySelector("#canvas");
+        const ctx = canvas.getContext("2d");
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      reader.onload = e => {
-        var canvas = document.querySelector("#canvas");
-        var ctx = canvas.getContext("2d");
-
-        var w = canvas.width;
-        var h = canvas.height;
-        ctx.clearRect(0, 0, w, h);
-
-        var img = new Image();
-        img.onload = function() {
-          ctx.drawImage(img, 0, 0, w, h);
+        // Load and draw image
+        const img = new Image();
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         };
         img.src = e.target.result;
       };
+      
       reader.readAsDataURL(files[0]);
-      e.target.value = "";
+      event.target.value = "";
       this.userContent = true;
     },
-
-    styleUpload(e) {
-      var files = e.target.files || e.dataTransfer.files;
-      if (!files.length) return;
-
-      var reader = new FileReader();
-      var vm = this;
-
-      reader.onload = e => {
-        var canvas = document.createElement("canvas");
-        var ctx = canvas.getContext("2d");
-        var imgSize = 256;
-        var image = new Image();
-
-        canvas.width = imgSize;
-        canvas.height = imgSize;
-
-        var imgData;
-
-        image.onload = function() {
-          ctx.drawImage(image, 0, 0, imgSize, imgSize);
-          let imgData = canvas.toDataURL("image/png");
-          vm.setUserStyleSrc(imgData);
-        };
-        image.src = e.target.result;
-      };
-      reader.readAsDataURL(files[0]);
-      e.target.value = "";
-    },
-
-    setUserStyleSrc(data) {
-      this.userStyleSrc = data;
-      this.userStyle = true;
-      this.submitDisable = false;
-
-      var submit = this.$el.querySelector(".submit");
-      submit.scrollIntoView({ behavior: "smooth" });
-    },
-
-    removeUserStyle() {
-      this.userStyle = false;
-      this.userStyleSrc = "";
-      this.submitDisable = true;
-    }
   }
 };
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+/* Base Styles */
+#wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
 #wrapper h1 {
-  margin: 1rem 0rem;
+  text-align: center;
+  margin: 1rem 0 2rem;
+  color: #2c3e50;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
 }
 
 #wrapper h3 {
-  margin-top: 0.2rem;
-  margin-bottom: 0.8rem;
+  margin: 0 0 1rem;
+  color: #34495e;
+  font-size: clamp(1rem, 3vw, 1.25rem);
 }
 
+/* Layout */
 .container {
   display: flex;
+  gap: 3rem;
+  align-items: flex-start;
 }
 
 .section {
-  margin: 0.5rem 1rem;
-  flex-grow: 1;
-  width: 35%;
+  flex: 1;
+  min-width: 300px;
 }
 
-.section .options .vue-js-switch {
-  margin: 0.5rem;
-}
-
-.image-container .image-flex {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  max-width: 400px;
-  margin: 0 auto;
-}
-
-.image-container .image-item {
-  width: 25%;
-  margin: 3px;
-  padding: 2px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.055);
-  transition: all 0.2s ease-in-out;
-}
-
-.image-container .image-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  overflow: hidden;
-}
-
-img.selected {
-  box-sizing: border-box;
-  border: 4px solid #0088cc;
-}
-
-.result-container {
-  min-width: 200px;
-  min-height: 200px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: #ffffff;
-  padding: 0.5rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.result-container img {
-  border: 1px solid #eee;
-  border-radius: 0.2rem;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  overflow: hidden;
-}
-
-.hint {
-  font-weight: 200;
-  font-size: 1rem;
-  color: #95a5a6;
-}
-
-.overlay {
-  position: fixed;
-  z-index: 9998;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  color: #bdc3c7;
-}
-
-.overlay .content {
-  margin: 1rem;
-}
-
-@media only screen and (max-width: 800px) {
-  .container {
-    flex-direction: column;
-  }
-
-  .section {
-    margin: 0;
-    width: 100%;
-  }
-
-  .canvas-wrapper {
-    max-height: 500px;
-  }
-}
-
+/* Canvas */
 .canvas-wrapper {
+  width: 100%;
   max-height: 400px;
-  height: auto;
-  padding: 10px;
+  padding: 1rem;
+  border: 2px solid #ecf0f1;
+  border-radius: 8px;
+  background: #f8f9fa;
+  margin-bottom: 1.5rem;
 }
 
-.btn {
-  background-color: #008cba;
-  border: none;
-  border-radius: 0.3em;
-  color: white;
-  padding: 0.5em 1em;
-  margin: 0.5em;
-  font-size: 1rem;
-  font-family: inherit;
-  font-weight: 400;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  -webkit-transition-duration: 0.4s; /* Safari */
-  transition-duration: 0.4s;
-  cursor: pointer;
+/* Button Rows */
+.button-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
-.btn:hover {
-  background: #34495e;
+.button-row:last-child {
+  margin-bottom: 0;
 }
 
-.btn.disabled,
-.btn[disabled],
-fieldset[disabled] .btn {
-  pointer-events: none;
-  cursor: not-allowed;
-  box-shadow: none;
-  opacity: 0.5;
-}
-
+/* File Input */
 input[type="file"] {
   display: none;
 }
 
-.style-hint form {
-  display: inline;
-}
-
-.style-hint {
-  font-weight: 200;
-  font-size: 0.8rem;
-  color: #95a5a6;
-}
-
-.style-hint .upload-label {
-  text-decoration: underline;
-}
-
-.upload-label {
+/* Buttons */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
-  font-weight: 200;
-  font-size: 0.8rem;
-  color: #95a5a6;
+  transition: all 0.3s ease;
+  flex: 1;
+  min-width: 120px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
 }
 
-.upload-style img {
-  width: 120px;
-  height: 120px;
-  margin: 0.2rem;
-  padding: 2px;
-  border: 1px solid #ddd;
+.btn-clear {
+  background: #e74c3c;
+  color: white;
+}
+
+.btn-clear:hover {
+  background: #c0392b;
+}
+
+.btn-upload {
+  background: #95a5a6;
+  color: white;
+}
+
+.btn-upload:hover {
+  background: #7f8c8d;
+}
+
+.btn-submit {
+  background: #3498db;
+  color: white;
+  width: 100%;
+}
+
+.btn-submit:hover {
+  background: #2980b9;
+}
+
+.btn-gallery {
+  background: #27ae60;
+  color: white;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.btn-gallery:hover {
+  background: #229954;
+}
+
+/* Result Section */
+.result-container {
+  width: 100%;
+  min-height: 300px;
+  border: 2px solid #ecf0f1;
+  border-radius: 8px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.result-container img {
+  max-width: 100%;
+  object-fit: contain;
   border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.055);
-  transition: all 0.2s ease-in-out;
 }
 
-.upload-style .remove {
-  cursor: pointer;
-  font-weight: 200;
-  font-size: 0.8rem;
+.hint {
   color: #95a5a6;
-  text-decoration: underline;
+  font-size: 0.9rem;
+  text-align: center;
+  font-style: italic;
 }
 
-span.clear {
-  background: url("../assets/icons/eraser.svg") no-repeat top left;
-  background-size: contain;
-  cursor: pointer;
-  display: inline-block;
-  height: 1rem;
-  width: 1rem;
+.result-actions {
+  text-align: center;
 }
 
-span.submit {
-  background: url("../assets/icons/palette.svg") no-repeat top left;
-  background-size: contain;
-  cursor: pointer;
-  display: inline-block;
-  height: 1rem;
-  width: 1rem;
-}
-
-span.upload {
-  background: url("../assets/icons/upload.svg") no-repeat top left;
-  background-size: contain;
-  cursor: pointer;
-  display: inline-block;
-  height: 1rem;
-  width: 1rem;
-}
-
-.half-circle-spinner,
-.half-circle-spinner * {
-  box-sizing: border-box;
-}
-
-.half-circle-spinner {
-  width: 4rem;
-  height: 4rem;
-  border-radius: 100%;
-  position: relative;
-}
-
-.half-circle-spinner .circle {
-  content: "";
-  position: absolute;
+/* Loading Overlay */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  border-radius: 100%;
-  border: calc(60px / 10) solid transparent;
+  background: rgba(44, 62, 80, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
 }
 
-.half-circle-spinner .circle.circle-1 {
-  border-top-color: #bdc3c7;
-  animation: half-circle-spinner-animation 1s infinite;
+.spinner {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 1rem;
 }
 
-.half-circle-spinner .circle.circle-2 {
-  border-bottom-color: #bdc3c7;
-  animation: half-circle-spinner-animation 1s infinite alternate;
+.spinner-circle {
+  width: 100%;
+  height: 100%;
+  border: 4px solid #ecf0f1;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
-@keyframes half-circle-spinner-animation {
-  0% {
-    transform: rotate(0deg);
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: #ecf0f1;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  #wrapper {
+    padding: 0.5rem;
   }
-  100% {
-    transform: rotate(360deg);
+  
+  .container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .section {
+    min-width: unset;
+  }
+  
+  .canvas-wrapper {
+    max-height: 300px;
+    padding: 0.5rem;
+  }
+  
+  .button-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .btn {
+    flex: none;
+    min-width: unset;
+  }
+  
+  .result-container {
+    min-height: 250px;
+  }
+}
+
+@media (max-width: 480px) {
+  .canvas-wrapper {
+    max-height: 250px;
+  }
+  
+  .result-container {
+    min-height: 200px;
+  }
+  
+  .btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .upload-btn,
+  .spinner-circle {
+    transition: none;
+    animation: none;
   }
 }
 </style>
