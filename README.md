@@ -2,20 +2,20 @@
   <img src="https://user-images.githubusercontent.com/5097752/41201696-1c1fe926-6cef-11e8-8972-b22e89dba68c.jpg" width="300px" alt="">
 </p>
 
-# Doodle-Art :art:
+# Doodle-Art:
 
-* [Introduction](#introduction)
-* [Theories](#theories)
-  + [Sketch Reconstruction](#sketch-reconstruction)
+<!-- * [Introduction](#introduction)
+* [Theories](#theories) -->
+  <!-- + [Sketch Reconstruction](#sketch-reconstruction)
   + [Style Transfer](#style-transfer)
 * [Manual Installation](#manual-installation)
   + [Backend](#backend)
   + [Frontend](#frontend)
 * [Authors](#authors)
-* [License](#license)
+* [License](#license) -->
 
 
-## Introduction
+<!-- ## Introduction
 
 This project can transform your casual sketch to beautiful painting/artwork using modern AI technology.
 
@@ -23,42 +23,42 @@ This project can transform your casual sketch to beautiful painting/artwork usin
 
 <p align="center">
   <img src="https://user-images.githubusercontent.com/5097752/41201770-a6b9f35a-6cf0-11e8-8711-916f769c1c9d.jpg" alt="">
-</p>
+</p> -->
 
 ## Theories
 
-To achieve the goal, there are mainly two steps in the pipeline:
+<!-- To achieve the goal, there are mainly two steps in the pipeline: -->
+To achieve the goal, we have simple idea:
 
 - Reconstruct and generate *real* image from the sketch
-- Arbitary style transfer to beautify the result with given result
+<!-- - Arbitary style transfer to beautify the result with given result -->
 
 ### Sketch Reconstruction
 
-The principle behind this is called **Conditional Adversarial Networks**, known as [pix2pix](https://phillipi.github.io/pix2pix/), which is able to generate image based on the given image.
+The principle behind this is called **Conditional Adversarial Networks**, known as [pix2pix](https://phillipi.github.io/pix2pix/), which is able to translate the image based on the given image.
 
 ![](https://user-images.githubusercontent.com/5097752/41201879-ca11fd6e-6cf2-11e8-91c3-f0cf0f1ac50d.jpg)
 
-### Style Transfer
+<!-- ### Style Transfer
 
 It became known to us with the appearance of [Prisma](https://prisma-ai.com/) app. Typically, we generate an individual model for each pre-defined style. Here, we want to go further by using any new picture as the style. So, we adopted the method, [**Universal Style Transfer via Feature Transforms**](https://arxiv.org/abs/1705.08086) proposed in NIPS2017, which enables us to perform arbitary style transfer.
 <p align="center">
   <img src="https://user-images.githubusercontent.com/5097752/41201821-f40a5cb6-6cf1-11e8-917f-779f4055ffc5.jpg" width="400px" alt="">
-</p>
+</p> -->
 
-## Manual Installation
+## Development
 
 ### Backend
 
-The server side is powered by Python and Flask. You can see this [simpler example](https://github.com/mtobeiyf/keras-flask-deploy-webapp).
+The server side is powered by Python and Flask.
 Navigate to the `server` directory and all the files concerning the service and neural networks are there. The two main files:
 
 - `app_pix.py` for pix2pix translation
-- `app_stylize.py` for arbitrary style transfer
+<!-- - `app_stylize.py` for arbitrary style transfer -->
 
 #### Prerequisites
 
-Make sure you have Python installed, and some packages are needed: tensorflow, keras, pillow, flask, gevent.
-You can use pip to install them:
+Install requirements using pip command below:
 
 ```bash
 pip install -r server/requirements.txt
@@ -75,7 +75,7 @@ And you could see the output indicating the port it's listening (5001 and 5002).
 
 ### Frontend
 
-You should installed:
+You should install:
 
 - [Node.js](https://nodejs.org)
 - [Yarn](https://yarnpkg.com)
@@ -92,13 +92,12 @@ yarn  # or npm install
 yarn dev  # or npm run dev
 ```
 
-Open your favorite browser at `http://localhost:8080`, the site is there.
+Open your browser at and enter `http://localhost:8080`, you will see everything there.
 
 ## Authors
 
 Sandip Katel, Yujal Shrestha, Sharad Pokharel
 
 ## License
-Copyright © 2018, Doodle-Art
 
 Released under the [MIT License](https://opensource.org/licenses/MIT).
