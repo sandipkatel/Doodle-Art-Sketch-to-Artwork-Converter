@@ -64,7 +64,17 @@ Install requirements using pip command below:
 pip install -r server/requirements.txt
 ```
 
+You also need to install system model, for that use the shell command below in bash:
+
+```bash
+sh server/models/download_models.sh
+```
+
+*Note:* It may take some time and space to download.
+
 #### Run
+
+Run using shell command below in bash:
 
 ```bash
 # Simply run in bash
@@ -80,7 +90,7 @@ You should install:
 - [Node.js](https://nodejs.org)
 - [Yarn](https://yarnpkg.com)
 
-```
+```bash
 # Clone the repo
 git clone git@github.com:sandipkatel/Doodle-Art.git
 cd Doodle-Art
