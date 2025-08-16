@@ -7,7 +7,7 @@
     </div>
     <div class="content markdown-body">
       <div class="hero-section">
-        <h2>🎨 Transform Your Sketches into Beautiful Artwork</h2>
+        <h2>Transform Your Sketches into Beautiful Artwork</h2>
         <p>
           Doodle-Art is an innovative project that leverages modern AI technology to transform your casual sketches into stunning paintings and artwork. Using state-of-the-art machine learning techniques, we bridge the gap between simple doodles and professional-quality art.
         </p>
@@ -95,8 +95,7 @@ export default {
 }
 
 .hero-section {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #fff;
   padding: 2rem;
   border-radius: 10px;
   margin-bottom: 2rem;

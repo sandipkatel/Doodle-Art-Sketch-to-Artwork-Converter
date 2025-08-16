@@ -47,7 +47,7 @@
         </div>
         
         <div v-if="resultSrc" class="result-actions">
-          <button class="btn btn-upload" @click="uploadToGallery">
+          <button class="btn btn-gallery" @click="uploadToGallery">
             Save to Gallery (Beta)
           </button>
           <div class="hint">Right click to save image</div>
@@ -288,7 +288,7 @@ input[type="file"] {
 }
 
 .btn-clear {
-  background: #e74c3c;
+  background: #FF6B6B;
   color: white;
 }
 
@@ -297,33 +297,33 @@ input[type="file"] {
 }
 
 .btn-upload {
-  background: #95a5a6;
+  background: #4ECDC4;
   color: white;
 }
 
 .btn-upload:hover {
-  background: #7f8c8d;
+  background: #3b9993;
 }
 
 .btn-submit {
-  background: #3498db;
+  background: #6C5CE7;
   color: white;
   width: 100%;
 }
 
 .btn-submit:hover {
-  background: #2980b9;
+  background: #564ab6;
 }
 
 .btn-gallery {
-  background: #27ae60;
+  background: #FFD93D;
   color: white;
   width: 100%;
   margin-bottom: 0.5rem;
 }
 
 .btn-gallery:hover {
-  background: #229954;
+  background: #b3982a;
 }
 
 /* Result Section */
