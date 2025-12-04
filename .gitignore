@@ -42,3 +42,8 @@ venv/
 
 # Misc
 .DS_Store
+
+*/finalObjectDisc.pth.tar
+*/finalObjectGen.pth
+*/SceneDisc.pth.tar
+*/SceneGen.pth.tar
