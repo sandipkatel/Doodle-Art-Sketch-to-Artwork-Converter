@@ -1,19 +1,23 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
-import "./globals.css"
+import type React from "react";
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import "./globals.css";
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const _geist = Geist({ subsets: ["latin"] });
+const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Sketch to Image Transformer",
   description:
     "Transform your sketches into images using AI. Draw on the canvas, upload sketches, or transform them into detailed images with advanced AI models.",
-  generator: "v0.app",
+  generator: "doodel-art.ai",
   keywords: ["sketch", "image", "AI", "transformer", "drawing", "canvas"],
-  authors: [{ name: "v0" }],
+  authors: [
+    { name: "Sandip Katel" },
+    { name: "Yujal Shrestha" },
+    { name: "Sharqad Pokharel" },
+  ],
   openGraph: {
     title: "Sketch to Image Transformer",
     description: "Transform your sketches into images using AI",
@@ -36,12 +40,12 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-icon.png",
   },
-}
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="en">
@@ -50,5 +54,5 @@ export default function RootLayout({
         <Analytics />
       </body>
     </html>
-  )
+  );
 }

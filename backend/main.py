@@ -36,6 +36,7 @@ async def generate_image(
     model_type: str = Query(..., enum=["object", "scene"])
 ):
 
+    print("Received request for model type:", model_type)
     image_bytes = await file.read()
 
     # Select appropriate model
