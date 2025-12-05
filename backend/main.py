@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, Query
 from fastapi.responses import StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 from deepGenerator import Generator
 from discriminator import Discriminator
 from apiUtils import process_and_generate
@@ -7,6 +8,15 @@ import torch
 import io
 
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Your Next.js dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -18,11 +28,11 @@ object_disc = Discriminator(in_channels=3).to(device)
 scene_gen = Generator().to(device)
 scene_disc = Discriminator(in_channels=3).to(device)
 
-object_gen.load_state_dict(torch.load("finalObjectGen.pth")["state_dict"])
-object_disc.load_state_dict(torch.load("finalObjectDisc.pth.tar")["state_dict"])
+object_gen.load_state_dict(torch.load("finalObjectGen.pth", map_location=device)["state_dict"])
+object_disc.load_state_dict(torch.load("finalObjectDisc.pth.tar", map_location=device)["state_dict"])
 
-scene_gen.load_state_dict(torch.load("SceneGen.pth.tar")["state_dict"])
-scene_disc.load_state_dict(torch.load("SceneDisc.pth.tar")["state_dict"])
+scene_gen.load_state_dict(torch.load("SceneGen.pth.tar", map_location=device)["state_dict"])
+scene_disc.load_state_dict(torch.load("SceneDisc.pth.tar", map_location=device)["state_dict"])
 
 object_gen.eval()
 object_disc.eval()
