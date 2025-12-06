@@ -5,18 +5,18 @@ import type React from "react";
 import { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Pencil,
   Eraser,
   Trash2,
   Upload,
   Sparkles,
-  ChevronDown,
   Box,
   Image as Scene,
 } from "lucide-react";
@@ -24,13 +24,15 @@ import {
 interface SketchCanvasProps {
   onTransform: (imageData: string) => void;
   onUpload: (file: File) => void;
-  onSketchTypeChange?: (type: string) => void;
+  onSketchTypeChange: (type: "object" | "scene") => void;
+  sketchType: "object" | "scene";
 }
 
-export function SketchCanvas({ 
-  onTransform, 
+export function SketchCanvas({
+  onTransform,
   onUpload,
-  onSketchTypeChange
+  onSketchTypeChange,
+  sketchType,
 }: SketchCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -49,14 +51,14 @@ export function SketchCanvas({
       if (!container) return;
 
       const containerHeight = container.clientHeight;
-      const size = Math.min(containerHeight, window.innerWidth - 48); // Account for padding
-      
+      const size = Math.min(containerHeight, window.innerWidth - 48) - 24; // Account for padding
+
       setCanvasSize({ width: size, height: size });
     };
 
     updateCanvasSize();
-    window.addEventListener('resize', updateCanvasSize);
-    return () => window.removeEventListener('resize', updateCanvasSize);
+    window.addEventListener("resize", updateCanvasSize);
+    return () => window.removeEventListener("resize", updateCanvasSize);
   }, []);
 
   // Initialize canvas with white background
@@ -231,33 +233,24 @@ export function SketchCanvas({
         </div>
 
         <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-              >
-                Sketch Type
-                <ChevronDown className="ml-1 size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem 
-                onClick={() => onSketchTypeChange?.("object")}
-                className="cursor-pointer"
-              >
-                <Box className="mr-2 h-4 w-4" />
-                Object
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => onSketchTypeChange?.("scene")}
-                className="cursor-pointer"
-              >
-                <Scene className="mr-2 h-4 w-4" />
-                Scene
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Select value={sketchType} onValueChange={(value) => onSketchTypeChange(value as "object" | "scene") }>
+            <SelectTrigger className="h-7 w-25 ml-2 text-xs px-2 py-0">
+              <SelectValue placeholder="Sketch Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="object" className="text-xs py-1">
+                <div className="flex flex-row">
+                  <Box className="mr-2 h-4 w-4" /> Object
+                </div>
+              </SelectItem>
+              <SelectItem value="scene" className="text-xs py-1">
+                <div className="flex flex-row">
+                  <Scene className="mr-2 h-4 w-4" />
+                  Scene
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
           <Button
             variant="outline"
             size="sm"
@@ -272,23 +265,29 @@ export function SketchCanvas({
       </div>
 
       {/* Canvas Container - Square and Centered */}
-      <div 
+      <div
         ref={containerRef}
         className="flex-1 flex items-center justify-center p-4 bg-muted/30"
       >
-        <canvas
-          ref={canvasRef}
-          onMouseDown={startDrawing}
-          onMouseMove={draw}
-          onMouseUp={stopDrawing}
-          onMouseLeave={stopDrawing}
-          style={{
-            width: `${canvasSize.width-24}px`,
-            height: `${canvasSize.height-24}px`,
-          }}
-          className="cursor-crosshair bg-white border border-border shadow-lg"
-          aria-label="Drawing canvas"
-        />
+        <div className="flex flex-col items-center gap-1">
+          {/* <p className="text-sm text-muted-foreground">
+            Draw a {sketchType === "object" ? "single object" : "scene"} to
+            transform
+          </p> */}
+          <canvas
+            ref={canvasRef}
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
+            style={{
+              width: `${canvasSize.width}px`,
+              height: `${canvasSize.height}px`,
+            }}
+            className="cursor-crosshair bg-white border border-border shadow-lg"
+            aria-label="Drawing canvas"
+          />
+        </div>
       </div>
 
       {/* Upload and Transform Buttons */}
@@ -299,7 +298,7 @@ export function SketchCanvas({
           onClick={() => fileInputRef.current?.click()}
           className="h-12 flex-1 gap-1"
         >
-          <Upload size={18} />
+          <Upload size={14} />
           Upload Sketch
         </Button>
         <input
@@ -318,7 +317,7 @@ export function SketchCanvas({
           className="h-12 flex-1 gap-1"
         >
           <Sparkles size={14} />
-          {transforming ? "Transforming..." : "Transform"}
+          {transforming ? "Transforming..." : `Transform ${sketchType}`}
         </Button>
       </div>
     </div>

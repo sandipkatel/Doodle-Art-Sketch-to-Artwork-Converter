@@ -1,8 +1,9 @@
 "use client";
 
 import { SketchCanvas } from "@/components/sketch-canvas";
-import { Sidebar } from "@/components/sidebar";
+// import { Sidebar } from "@/components/sidebar";
 import { useState, useCallback } from "react";
+import { TransformedImage } from "@/components/transformed-image";
 
 export interface SketchItem {
   id: string;
@@ -14,6 +15,7 @@ export interface SketchItem {
 export default function Page() {
   const [sketch, setSketch] = useState<SketchItem>();
   const [isTransforming, setIsTransforming] = useState(false);
+  const [sketchType, setSketchType] = useState<"object" | "scene">("object");
 
   const handleUpload = useCallback((file: File) => {
     const reader = new FileReader();
@@ -27,6 +29,12 @@ export default function Page() {
       setSketch(newSketch);
     };
     reader.readAsDataURL(file);
+  }, []);
+
+  const handleClearResult = useCallback(() => {
+    setSketch((prev) =>
+      prev ? { ...prev, transformedImage: undefined } : prev
+    );
   }, []);
 
   // const handleDelete = useCallback(
@@ -51,7 +59,7 @@ export default function Page() {
 
       try {
         setIsTransforming(true);
-        console.log("Starting transform for new sketch");
+        console.log("Starting transform for new sketch with type:", sketchType);
 
         // Convert base64 to Blob
         const base64Data = imageData.split(",")[1]; // Remove data:image/png;base64,
@@ -72,7 +80,7 @@ export default function Page() {
 
         // Add model_type as query parameter
         const response = await fetch(
-          "http://localhost:8000/generate?model_type=scene",
+          "http://localhost:8000/generate?model_type=" + sketchType,
           {
             method: "POST",
             body: formData,
@@ -107,8 +115,14 @@ export default function Page() {
         setIsTransforming(false);
       }
     },
-    [sketch]
+    [sketchType]
   );
+
+  const handleSketchTypeChange = useCallback((value: "object" | "scene") => {
+    setSketchType(value);
+    console.log("Sketch type changed to:", value, " from page component", sketchType);
+    // The `sketchType` here will show the OLD value due to closure
+}, [setSketchType]);
 
   return (
     <div className="flex h-screen bg-background">
@@ -119,7 +133,12 @@ export default function Page() {
             sketch?.transformedImage ? "w-1/2" : "w-full"
           }`}
         >
-          <SketchCanvas onUpload={handleUpload} onTransform={handleTransform} />
+          <SketchCanvas
+            onUpload={handleUpload}
+            onTransform={handleTransform}
+            onSketchTypeChange={handleSketchTypeChange}
+            sketchType={sketchType}
+          />
         </div>
 
         {/* Transformed Image Container */}
@@ -128,112 +147,13 @@ export default function Page() {
             sketch?.transformedImage ? "w-1/2 opacity-100" : "w-0 opacity-0"
           }`}
         >
-          <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 border-l border-slate-200">
-            {/* Header */}
-            <div className="p-6 border-b border-slate-200 bg-white/80 backdrop-blur">
-              <h3 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                <svg
-                  className="w-6 h-6 text-emerald-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                Generated Result
-              </h3>
-              <p className="text-sm text-slate-500 mt-1">
-                Your sketch has been transformed
-              </p>
-            </div>
-
-            {/* Image Display */}
-            <div className="flex-1 p-6 flex items-center justify-center">
-              <div className="relative w-full h-full max-w-2xl max-h-2xl">
-                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-400/20 to-blue-400/20 rounded-2xl blur-2xl"></div>
-                <div className="relative w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 transform hover:scale-[1.02] transition-transform duration-300">
-                  {isTransforming ? (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="inline-block w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p className="text-slate-600 font-medium">
-                          Transforming your sketch...
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <img
-                      src={sketch?.transformedImage}
-                      alt="Transformed Sketch"
-                      className="w-full h-full object-contain p-4 animate-fadeIn"
-                    />
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="p-6 border-t border-slate-200 bg-white/80 backdrop-blur flex gap-3">
-              <button
-                onClick={() =>
-                  setSketch((prev) =>
-                    prev ? { ...prev, transformedImage: undefined } : prev
-                  )
-                }
-                className="flex-1 px-4 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium rounded-lg transition-colors duration-200"
-              >
-                Clear Result
-              </button>
-              <button
-                onClick={() => {
-                  const link = document.createElement("a");
-                  link.href = sketch?.transformedImage || "";
-                  link.download = `transformed-${Date.now()}.png`;
-                  link.click();
-                }}
-                className="flex-1 px-4 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
-                Download
-              </button>
-            </div>
-          </div>
+          <TransformedImage
+            imageUrl={sketch?.transformedImage}
+            isTransforming={isTransforming}
+            onClear={handleClearResult}
+          />
         </div>
       </main>
-
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        .animate-fadeIn {
-          animation: fadeIn 0.5s ease-out;
-        }
-      `}</style>
     </div>
   );
 }
