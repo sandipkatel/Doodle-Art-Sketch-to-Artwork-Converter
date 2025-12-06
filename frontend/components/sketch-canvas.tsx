@@ -5,44 +5,84 @@ import type React from "react";
 import { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  PencilIcon,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Pencil,
   Eraser,
   Trash2,
-  Download,
   Upload,
   Sparkles,
-  AlertCircle,
+  ChevronDown,
+  Box,
+  Image as Scene,
 } from "lucide-react";
 
 interface SketchCanvasProps {
   onTransform: (imageData: string) => void;
   onUpload: (file: File) => void;
+  onSketchTypeChange?: (type: string) => void;
 }
 
-// export function SketchCanvas({ onSave }: SketchCanvasProps) {
-export function SketchCanvas({ onTransform, onUpload }: SketchCanvasProps) {
+export function SketchCanvas({ 
+  onTransform, 
+  onUpload,
+  onSketchTypeChange
+}: SketchCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [transforming, setTransforming] = useState(false);
   const [tool, setTool] = useState<"pen" | "eraser">("pen");
   const [lineWidth, setLineWidth] = useState(3);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
+  // Calculate and set canvas size based on container height
+  useEffect(() => {
+    const updateCanvasSize = () => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const containerHeight = container.clientHeight;
+      const size = Math.min(containerHeight, window.innerWidth - 48); // Account for padding
+      
+      setCanvasSize({ width: size, height: size });
+    };
+
+    updateCanvasSize();
+    window.addEventListener('resize', updateCanvasSize);
+    return () => window.removeEventListener('resize', updateCanvasSize);
+  }, []);
+
+  // Initialize canvas with white background
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || canvasSize.width === 0) return;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Set canvas size to window size
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    canvas.width = canvasSize.width;
+    canvas.height = canvasSize.height;
 
     // Fill with white background
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }, []);
+
+    // If there's an uploaded image, draw it
+    if (uploadedImage) {
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      };
+      img.src = uploadedImage;
+    }
+  }, [canvasSize, uploadedImage]);
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -98,11 +138,11 @@ export function SketchCanvas({ onTransform, onUpload }: SketchCanvasProps) {
 
     ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    setUploadedImage(null);
   };
 
   const handleTransformClick = async () => {
     setTransforming(true);
-    // setErrors((prev) => ({ ...prev, [id]: "" }));
 
     try {
       const canvas = canvasRef.current;
@@ -113,8 +153,7 @@ export function SketchCanvas({ onTransform, onUpload }: SketchCanvasProps) {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to transform sketch";
-      // setErrors((prev) => ({ ...prev, [id]: errorMessage }));
-      console.error("[v0] Transform error:", error);
+      console.error("Transform error:", error);
     } finally {
       setTransforming(false);
     }
@@ -125,20 +164,21 @@ export function SketchCanvas({ onTransform, onUpload }: SketchCanvasProps) {
     if (file) {
       const MAX_FILE_SIZE = 10 * 1024 * 1024;
       if (file.size > MAX_FILE_SIZE) {
-        // setErrors((prev) => ({ ...prev, upload: "File size exceeds 10MB limit" }))
+        alert("File size exceeds 10MB limit");
         return;
       }
-      // setErrors((prev) => ({ ...prev, upload: "" }))
+
+      // Read the file and set it as uploaded image
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        setUploadedImage(result);
+      };
+      reader.readAsDataURL(file);
+
       onUpload(file);
     }
   };
-  // const saveSketch = () => {
-  //   const canvas = canvasRef.current;
-  //   if (!canvas) return;
-
-  //   const imageData = canvas.toDataURL("image/png");
-  //   onSave(imageData);
-  // };
 
   return (
     <div className="flex flex-col h-full">
@@ -152,7 +192,7 @@ export function SketchCanvas({ onTransform, onUpload }: SketchCanvasProps) {
             className="gap-2"
             aria-label="Select pen tool"
           >
-            <PencilIcon size={18} />
+            <Pencil size={18} />
             Pen
           </Button>
           <Button
@@ -191,6 +231,33 @@ export function SketchCanvas({ onTransform, onUpload }: SketchCanvasProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+              >
+                Sketch Type
+                <ChevronDown className="ml-1 size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem 
+                onClick={() => onSketchTypeChange?.("object")}
+                className="cursor-pointer"
+              >
+                <Box className="mr-2 h-4 w-4" />
+                Object
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => onSketchTypeChange?.("scene")}
+                className="cursor-pointer"
+              >
+                <Scene className="mr-2 h-4 w-4" />
+                Scene
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             variant="outline"
             size="sm"
@@ -204,22 +271,25 @@ export function SketchCanvas({ onTransform, onUpload }: SketchCanvasProps) {
         </div>
       </div>
 
-      {/* Canvas */}
-      <canvas
-        ref={canvasRef}
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseLeave={stopDrawing}
-        className="flex-1 cursor-crosshair bg-white"
-        aria-label="Drawing canvas"
-      />
-      {/* {errors.upload && (
-        <div className="mb-3 p-2 bg-destructive/10 border border-destructive/30 rounded-md flex gap-2 text-xs text-destructive">
-          <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
-          <span>{errors.upload}</span>
-        </div>
-      )} */}
+      {/* Canvas Container - Square and Centered */}
+      <div 
+        ref={containerRef}
+        className="flex-1 flex items-center justify-center p-4 bg-muted/30"
+      >
+        <canvas
+          ref={canvasRef}
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+          style={{
+            width: `${canvasSize.width-24}px`,
+            height: `${canvasSize.height-24}px`,
+          }}
+          className="cursor-crosshair bg-white border border-border shadow-lg"
+          aria-label="Drawing canvas"
+        />
+      </div>
 
       {/* Upload and Transform Buttons */}
       <div className="h-max flex items-center gap-3 p-4 border-t border-border">
@@ -227,7 +297,7 @@ export function SketchCanvas({ onTransform, onUpload }: SketchCanvasProps) {
           variant="outline"
           size="sm"
           onClick={() => fileInputRef.current?.click()}
-          className="h-12 flex-1 gap-1 text-sidebar-foreground border-sidebar-border hover:bg-sidebar-accent"
+          className="h-12 flex-1 gap-1"
         >
           <Upload size={18} />
           Upload Sketch
@@ -240,26 +310,16 @@ export function SketchCanvas({ onTransform, onUpload }: SketchCanvasProps) {
           className="hidden"
         />
 
-        {/* {!sketch.transformedImage && ( */}
         <Button
           size="sm"
           variant="default"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleTransformClick();
-          }}
+          onClick={handleTransformClick}
           disabled={transforming}
-          className="h-12 flex-1 gap-1 text-xs"
+          className="h-12 flex-1 gap-1"
         >
           <Sparkles size={14} />
           {transforming ? "Transforming..." : "Transform"}
         </Button>
-        {/* )} */}
-        {/* {sketch.transformedImage && ( */}
-        {/* <div className="flex-1 px-2 py-1 rounded text-xs bg-sidebar-accent text-sidebar-accent-foreground flex items-center justify-center">
-          ✓ Transformed
-        </div> */}
-        {/* )} */}
       </div>
     </div>
   );
