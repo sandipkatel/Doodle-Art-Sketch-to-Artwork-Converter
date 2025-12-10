@@ -147,7 +147,7 @@ These scripts will generate predictions on the test dataset and compute evaluati
 
 For detailed information about the project, including architecture, methodology, and results:
 
-- **Full Project Report**: [ADS_Final_Report.pdf](./documentation/Project_Report.pdf)
+- **Full Project Report**: [Project_Report.pdf](./documentation/Project_Report.pdf)
 - **Additional Documentation**: [Documentation Folder](./documentation/)
 
 ## Demo
