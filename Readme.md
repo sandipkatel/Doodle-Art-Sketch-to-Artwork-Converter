@@ -119,6 +119,8 @@ python test2.py
 
 These scripts will generate predictions on the test dataset and compute evaluation metrics (SSIM, PSNR, FID, LPIPS).
 
+**Note:** You may have your own testing algorithm.
+
 ## Model Architecture
 
 - **Generator**: U-Net with DeepBlocks and skip connections
